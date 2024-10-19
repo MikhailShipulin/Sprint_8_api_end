@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -39,13 +40,13 @@ class Comment {
     private String date;
 
     public Comment(User user, String text) {
-        this.user = new ManagerUser().getUser(2);
+        this.user = user;
         this.text = text;
         this.date = String.valueOf(LocalDateTime.now());
     }
 
     public User getUser() {
-        return user;
+        return new ManagerUser().getUser(2);
     }
 
     public String getText() {
