@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -6,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 public class UsersHandler implements HttpHandler {
 
@@ -20,11 +22,16 @@ public class UsersHandler implements HttpHandler {
 
             switch (endpoint){
                 case GET_USERS: {
-                    handleGetPosts(exchange);
+                    handleGetUser(exchange);
                     break;
                 }
+                case POST_USERS: {
+                    handlePostUser(exchange);
+                    break;
+                }
+                default:
+                    writeResponse(exchange, "Такого эндпоинта не существует", 404);
             }
-
         }
 
     private Endpoint getEndpoint(String requestPath, String requestMethod) {
@@ -34,10 +41,16 @@ public class UsersHandler implements HttpHandler {
             return Endpoint.GET_USERS;
         }
 
+      if (pathParts.length == 5 && pathParts[1].equals("users") && pathParts[4].equals("add")) {
+          if (requestMethod.equals("POST")) {
+              return Endpoint.POST_USERS;
+          }
+      }
+
         return Endpoint.UNKNOWN;
     }
 
-    private void handleGetPosts(HttpExchange exchange) throws IOException {
+    private void handleGetUser(HttpExchange exchange) throws IOException {
         writeResponse(exchange, gson.toJson(managerUser.getUsers()), 200);
     }
 
@@ -54,6 +67,46 @@ public class UsersHandler implements HttpHandler {
             }
         }
         exchange.close();
+    }
+
+    private void handlePostUser(HttpExchange exchange) throws IOException {
+        // реализуйте обработку добавления комментария
+        Optional<Integer> postIdOpt = PostsHandler.getPostId(exchange);
+        Optional<Integer> userIdOpt = getUserId(exchange);
+        // извлеките идентификатор поста и обработайте исключительные ситуации
+        if (userIdOpt.isEmpty()) {
+            writeResponse(exchange,"Некорректный идентификатор пользователя", 400);
+            return;
+        }
+
+            /* Получите тело запроса в виде текста в формате JSON и преобразуйте его в объект Comment.
+            Учтите, что может быть передан некоректный JSON — эту ситуацию нужно обработать.
+            Подумайте, какие ещё ситуации требуют обработки. */
+
+        int postId = postIdOpt.get();
+        int userId = userIdOpt.get();
+
+
+        // найдите пост с указанным идентификатором и добавьте в него комментарий
+        for (Post post: PostsHandler.posts) {
+            if (post.getId() == postId) {
+                post.addComment(new Comment(managerUser.getUser(userId)));
+                writeResponse(exchange, "Добавлен пользователь в пост ", 201);
+                return;
+            }
+        }
+        writeResponse(exchange, "Пост с идентификатором " + postId + " не найден", 404);
+    }
+
+    private Optional<Integer> getUserId(HttpExchange exchange) {
+        String[] pathParts = exchange.getRequestURI().getPath().split("/");
+        try {
+            return Optional.of(Integer.parseInt(pathParts[3]));
+        } catch (NumberFormatException exception) {
+            return Optional.empty();
+        }
+
+
     }
 
 }

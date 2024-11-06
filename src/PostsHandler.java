@@ -144,7 +144,7 @@ public class PostsHandler implements HttpHandler {
         writeResponse(exchange, "Пост с идентификатором " + postId + " не найден", 404);
     }
 
-    private Optional<Integer> getPostId(HttpExchange exchange) {
+    protected static Optional<Integer> getPostId(HttpExchange exchange) {
         String[] pathParts = exchange.getRequestURI().getPath().split("/");
         try {
             return Optional.of(Integer.parseInt(pathParts[2]));

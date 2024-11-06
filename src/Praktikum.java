@@ -45,6 +45,9 @@ class Comment {
         this.date = String.valueOf(LocalDateTime.now());
     }
 
+    public Comment(User user) {
+    }
+
     public User getUser() {
         return new ManagerUser().getUser(2);
     }
